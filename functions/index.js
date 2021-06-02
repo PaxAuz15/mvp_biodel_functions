@@ -3,30 +3,22 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-exports.helloWorld = functions.https.onRequest((request, response) => {
-    functions.logger.info("Hello logs!", { structuredData: true });
-    response.send("Hello from Firebase!");
-});
+const express = require('express');
+const app = express();
 
-exports.getVendors = functions.https.onRequest((req,resp)=>{
+app.get('/vendors',(req,res)=>{
     admin.firestore().collection("vendors").get()
         .then((data) =>{
             let vendors=[];
             data.forEach((doc) =>{
                 vendors.push(doc.data());
             });
-            return resp.json(vendors);
+            return res.json(vendors);
         })
         .catch((err)=>console.log(err));
 })
 
-exports.createAgents = functions.https.onRequest((req,res)=>{
-    if (req.method !== 'POST'){
-        return res.status(400).json({ error: 'Method not allowed' });
-    }
+app.post('/agent',(req,res)=>{
 
     const newAgent = {
         email: req.body.email,
@@ -42,3 +34,5 @@ exports.createAgents = functions.https.onRequest((req,res)=>{
         console.log(err)
     });
 });
+
+exports.api = functions.https.onRequest(app);
