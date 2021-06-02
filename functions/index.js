@@ -22,3 +22,23 @@ exports.getVendors = functions.https.onRequest((req,resp)=>{
         })
         .catch((err)=>console.log(err));
 })
+
+exports.createAgents = functions.https.onRequest((req,res)=>{
+    if (req.method !== 'POST'){
+        return res.status(400).json({ error: 'Method not allowed' });
+    }
+
+    const newAgent = {
+        email: req.body.email,
+        names: req.body.names,
+        last_name: req.body.last_name,
+        phone: req.body.phone
+    }
+
+    admin.firestore().collection('agents').add(newAgent).then(doc => {
+        res.json({ message: `document ${doc.id} created successfully`});
+    }).catch(err => {
+        res.status(500).json({ error: 'something went wrong'});
+        console.log(err)
+    });
+});
