@@ -14,13 +14,6 @@ app.get('/vendors',(req,res)=>{
                 vendors.push({
                     vendorId: doc.id,
                     ...doc.data()
-                    // agent_id: doc.data().agent_id,
-                    // email: doc.data().email,
-                    // name: doc.data().name,
-                    // phone_vendor_id: doc.data().phone_vendor_id,
-                    // vendors_set_id: doc.data().vendors_set_id,
-                    // created_at: doc.data().created_at,
-                    // updated_at: doc.data().updated_at
                 });
             });
             return res.json(vendors);
@@ -46,5 +39,20 @@ app.post('/agent',(req,res)=>{
         console.log(err)
     });
 });
+
+app.get('/agent',(req,res)=>{
+    admin.firestore().collection("agents").get()
+        .then((data) =>{
+            let agents=[];
+            data.forEach((doc) =>{
+                agents.push({
+                    vendorId: doc.id,
+                    ...doc.data()
+                });
+            });
+            return res.json(agents);
+        })
+        .catch((err)=>console.log(err));
+})
 
 exports.api = functions.https.onRequest(app);
