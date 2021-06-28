@@ -4,55 +4,65 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const express = require('express');
+const { json } = require("express");
 const app = express();
 
-app.get('/vendors',(req,res)=>{
-    admin.firestore().collection("vendors").get()
-        .then((data) =>{
-            let vendors=[];
-            data.forEach((doc) =>{
-                vendors.push({
-                    vendorId: doc.id,
-                    ...doc.data()
+app.get('/products',(req,res)=>{
+    admin.firestore().collection("products").get()
+        .then(data=>{
+            let products = [];
+            data.forEach(product=>{
+                products.push({
+                    productId:product.id,
+                    ...product.data()
                 });
             });
-            return res.json(vendors);
+            return res.json(products);
         })
-        .catch((err)=>console.log(err));
+        .catch(err=>console.log(err))
 })
 
-app.post('/agent',(req,res)=>{
+app.post('/newproduct',(req,res)=>{
 
-    const newAgent = {
-        email: req.body.email,
-        names: req.body.names,
-        last_name: req.body.last_name,
-        phone: req.body.phone,
+    const zero = 0
+
+    const newProduct = {
+        name: req.body.name,
+        description: req.body.description,
+        buyed: req.body.buyed,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        user_handle_created: req.body.user_handle_created,
+        user_handle_updated: req.body.user_handle_updated,
+        manufactured: req.body.manufactured,
+        lotes:[
+            {
+                lote_intern: req.body.lotes[0].lote_intern,
+                lote_vendor: req.body.lotes[0].lote_vendor,
+                quantity: req.body.lotes[0].quantity,
+                quantity_available: req.body.lotes[0].quantity,
+                updated_at: new Date().toISOString(),
+                vendor:{
+                    email: req.body.lotes[0].vendor.email,
+                    name: req.body.lotes[0].vendor.name,
+                    phone: req.body.lotes[0].vendor.phone
+                }
+            }
+        ],
+        quantity: req.body.lotes[0].quantity
     }
 
-    admin.firestore().collection('agents').add(newAgent).then(doc => {
-        res.json({ message: `document ${doc.id} created successfully`});
-    }).catch(err => {
-        res.status(500).json({ error: 'something went wrong'});
-        console.log(err)
-    });
-});
-
-app.get('/agent',(req,res)=>{
-    admin.firestore().collection("agents").get()
-        .then((data) =>{
-            let agents=[];
-            data.forEach((doc) =>{
-                agents.push({
-                    vendorId: doc.id,
-                    ...doc.data()
-                });
+    admin.firestore().collection("products").add(newProduct)
+        .then(doc=>{
+            res,json({
+                message: `Document ${doc.id} created successfully`
             });
-            return res.json(agents);
-        })
-        .catch((err)=>console.log(err));
+        }).catch(err=>{
+            res.status(500).json({
+                error: 'Something went wrong'
+            });
+            console.log(err)
+        });
 })
 
 exports.api = functions.https.onRequest(app);
