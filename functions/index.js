@@ -1,14 +1,26 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const app = require('express')()
 
 admin.initializeApp();
 
-const express = require('express');
-const { json } = require("express");
-const app = express();
+const firebaseConfig = {
+    apiKey: "AIzaSyD9TSnG5MhWsojwcJz7NzF8By9YXDZ1XxM",
+    authDomain: "mvp-biodel.firebaseapp.com",
+    projectId: "mvp-biodel",
+    storageBucket: "mvp-biodel.appspot.com",
+    messagingSenderId: "311949773925",
+    appId: "1:311949773925:web:efcfed3aaa80924877ca8c",
+    measurementId: "G-K0XTLCKBWY"
+};
+
+const db = admin.firestore();
+
+const firebase = require('firebase');
+firebase.initializeApp(firebaseConfig);
 
 app.get('/products',(req,res)=>{
-    admin.firestore().collection("products").get()
+    db.collection("products").get()
         .then(data=>{
             let products = [];
             data.forEach(product=>{
@@ -52,9 +64,9 @@ app.post('/newproduct',(req,res)=>{
         quantity: req.body.lotes[0].quantity
     }
 
-    admin.firestore().collection("products").add(newProduct)
+    db.collection("products").add(newProduct)
         .then(doc=>{
-            res,json({
+            res.json({
                 message: `Document ${doc.id} created successfully`
             });
         }).catch(err=>{
@@ -63,6 +75,26 @@ app.post('/newproduct',(req,res)=>{
             });
             console.log(err)
         });
+})
+
+// Signup route
+app.post('/signup',(req,res)=>{
+    const newUser = {
+        email: req.body.email,
+        password: req.body.password,
+        confirmPassword: req.body.confirmPassword,
+        handle: req.body.handle,
+    };
+
+    // TODO: Validate data
+    firebase.auth().createUserWithEmailAndPassword(newUser.email,newUser.password)
+        .then(data => {
+            return res.status(201).json({ message: `user ${data.user.uid} signed up successfully` });
+        })
+        .catch(err => {
+            console.log(err);
+            return res.status(500).json({ error: err.code });
+        })
 })
 
 exports.api = functions.https.onRequest(app);
