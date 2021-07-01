@@ -86,13 +86,20 @@ app.post('/signup',(req,res)=>{
         handle: req.body.handle,
     };
 
-    // TODO: Validate data
-    firebase.auth().createUserWithEmailAndPassword(newUser.email,newUser.password)
-        .then(data => {
-            return res.status(201).json({ message: `user ${data.user.uid} signed up successfully` });
+    db.doc(`/users/${newUser.handle}`).get()
+        .then(doc => {
+            if(doc.exists){
+                return res.status(400).json({ handle: 'This handle is already taken' });
+            }else{
+                return firebase
+                    .auth()
+                    .createUserWithEmailAndPassword(newUser.email,newUser.password);
+            }
         })
+        .then(data => data.user.getIdToken())
+        .then(token => res.status(201).json({ token }))
         .catch(err => {
-            console.log(err);
+            console.error(err);
             return res.status(500).json({ error: err.code });
         })
 })
