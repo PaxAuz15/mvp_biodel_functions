@@ -34,7 +34,36 @@ app.get('/products',(req,res)=>{
         .catch(err=>console.log(err))
 })
 
-app.post('/newproduct',(req,res)=>{
+const FBAuth = (req,res,next) =>{
+    const Bearer = 'Bearer ';
+    let idToken;
+    if(req.headers.authorization && req.headers.authorization.startsWith(Bearer)){
+        idToken = req.headers.authorization.split(Bearer)[1];
+    }else{
+        console.error('No token found')
+        return res.status(403).json({ error: 'Unauthorized'});
+    }
+
+    admin.auth().verifyIdToken(idToken)
+        .then(decodedToken => {
+            req.user = decodedToken;
+            console.log(decodedToken);
+            return db.collection('users')
+                .where('userId','==', req.user.uid)
+                .limit(1)
+                .get()
+        })
+        .then(data=>{
+            req.user.handle = data.docs[0].data().handle;
+            return next();
+        })
+        .catch(err => {
+            console.error('Error while verifying token', err);
+            return res.status(403).json(err)
+        })
+}
+
+app.post('/newproduct', FBAuth ,(req,res)=>{
 
     const zero = 0
 
@@ -44,8 +73,8 @@ app.post('/newproduct',(req,res)=>{
         buyed: req.body.buyed,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        user_handle_created: req.body.user_handle_created,
-        user_handle_updated: req.body.user_handle_updated,
+        user_handle_created: req.user.handle,
+        user_handle_updated: req.user.handle,
         manufactured: req.body.manufactured,
         lotes:[
             {
