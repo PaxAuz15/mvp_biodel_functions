@@ -152,4 +152,29 @@ app.post('/signup',(req,res)=>{
         })
 })
 
+app.post('/login', (req,res)=>{
+    const user = {
+        email: req.body.email,
+        password: req.body.password
+    };
+
+    let errors = {};
+
+    if(isEmpty(user.email)) errors.email = 'Must not be empty';
+    if(isEmpty(user.password)) errors.email = 'Must not be empty';
+
+    if(Object.keys(errors).length > 0) return res.status(400).json(errors);
+
+    firebase.auth().signInWithEmailAndPassword(user.email,user.password)
+        .then(data => data.user.getIdToken())
+        .then(token => res.json({token}))
+        .catch(err=>{
+            if(err.code === 'auth/wrong-password'){
+                return res.status(403).json({general: 'Wrong credential. Please try again'})
+            }else{
+                return res.status(500).json({error: err.code});
+            }
+        })
+})
+
 exports.api = functions.https.onRequest(app);
